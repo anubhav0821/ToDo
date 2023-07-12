@@ -1,0 +1,23 @@
+
+<%- include("header") -%>
+    <div class="box" id="heading">
+
+      <h1>Its <%= day_type %> !!</h1>
+    </div>
+
+    <div class="box">
+      
+      <% for (var i = 0; i< todo.length; i++) { %>
+        <div class="item">
+          <input type="checkbox">
+          <p> <%=  todo[i] %> </p>
+        </div>
+          <% } %>
+          <form class="item" action="/" method="post">
+            <input type="text" name="todo" placeholder="Enter next todo" autocomplete="off">
+            <button type="submit" name="list" value=<%= day_type %>>+</button>
+          </form>
+        </div>
+
+        <%- include("footer") -%>
+  
