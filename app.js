@@ -13,14 +13,22 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(express.static("public"));
 
+
+// Connecting to MongoDB
 mongoose.connect("mongodb://127.0.0.1:27017/todolistDB");
 
+
+//Creating the schema for the main default item list
 const itemSchema = new mongoose.Schema({
   item: String,
 });
 
+
+// creating the collection in mongoDB
 const Item = mongoose.model("Item", itemSchema);
 
+
+// Three default items for the every list 
 const item_1 = new Item({
   item: "Welcome to your todo list.",
 });
@@ -33,16 +41,24 @@ const item_3 = new Item({
 
 var todo_default_items = [item_1, item_2, item_3];
 
+
+// Schema for the custom list that the user will be creating
 const listSchema = {
   name: String,
   items: [itemSchema]
 }
 
+
+// Custom list collection creation in mongoDB
 const List = mongoose.model("List", listSchema);
 
 var Week_days = days.getDate();
+
+// Home route
 app.get("/", function (req, res) {
 
+
+  //If the item in the collection does not exist, then the default is added to it with mongoose function.
   Item.find({})
     .then((result) => {
       if (result.length == 0) {
@@ -56,31 +72,37 @@ app.get("/", function (req, res) {
     });
 });
 
+
+//Adding the items to there respective lists
 app.post("/", function (req, res) {
     if (req.body.todo != "") {
       const item_name = req.body.todo;
       const list_name = req.body.list;
+
       const item = new Item({
         item: item_name,
       });
+//If the list title is the weekday, add it to the main list
       if(list_name === Week_days){
         item.save();
         res.redirect("/");
-      } else {
+      }
+// If the list name is one of the custom lists, add the item to the array for that list, using findOne and pusing the new item to its array.
+      else {
       List.findOne({name:`${list_name}`})
       .then((result) => {
       if (result != null){
        result.items.push(item);
        result.save();
        res.redirect(`/${list_name}`)
-      } 
-    });
+      }});
       }
     }
 });
 
 
-
+// When user check the checkbox, it uses form to trigger the /delete route
+//if the list name is the current day, then we call deleteOne mongoose function to search for that item and delete it.
 app.post("/delete", function (req, res) {
   const checked_item_id = req.body.check;
   const listName = req.body.listName;
@@ -93,6 +115,8 @@ app.post("/delete", function (req, res) {
     });
     res.redirect("/")
   } 
+
+// The list name is one of the custom list, then we find that list and go into its array of object to identify it with the unique id it has and update it with nothing
     else {
       List.findOneAndUpdate({name: listName},{$pull: {items: {_id:checked_item_id}}})
       .then((result) => {
@@ -107,7 +131,7 @@ app.post("/delete", function (req, res) {
 });
 
 
-
+// If the uses tyles in a custom name, we check if tan list by that name already existe and if not then we create a new list with an arry populated with the default values
 app.get("/:custom_list_name", function (req, res) {
   const custom_list = _.lowerCase(req.params.custom_list_name);
   
